@@ -1,0 +1,784 @@
+# MUI Admin Project Rules
+
+## Project Overview
+This is a React + TypeScript admin dashboard built with Material-UI (MUI), using Minimal UI framework. The project includes:
+- Frontend: React 19, TypeScript, Material-UI, React Router, i18next
+- Backend: Cloudflare Workers (Hono), D1 Database
+- State Management: React Context API
+- Styling: Emotion (via MUI)
+
+## Code Style & Formatting
+
+### Prettier Configuration
+- Use single quotes
+- Use semicolons
+- 2 spaces for indentation
+- 100 characters max line width
+- Trailing commas (ES5)
+- LF line endings
+
+### TypeScript
+- Strict mode enabled
+- Use explicit types when possible
+- `any` type is allowed but should be used sparingly
+- For Iconify icons, use `as any` type assertion when needed (e.g., `icon={iconName as any}`)
+
+## Import Order (CRITICAL - Must Follow)
+
+Import statements MUST follow this exact order:
+
+1. **Side-effect imports** (CSS, i18n initialization, etc.)
+   ```typescript
+   import './locales/i18n';
+   ```
+
+2. **Type imports** (from external packages)
+   ```typescript
+   import type { SomeType } from 'some-package';
+   ```
+
+3. **External packages** (alphabetically sorted)
+   ```typescript
+   import { useState, useEffect } from 'react';
+   import { useTranslation } from 'react-i18next';
+   ```
+   **Note**: `react` must come BEFORE `react-i18next` (alphabetical order)
+
+4. **Material-UI imports** (`@mui/material/*`)
+   ```typescript
+   import Box from '@mui/material/Box';
+   import Button from '@mui/material/Button';
+   ```
+
+5. **Internal imports** (from `src/`)
+   - API imports: `src/api/*`
+   - Component imports: `src/components/*`
+   - Hook imports: `src/hooks/*`
+   - Layout imports: `src/layouts/*`
+   - Section imports: `src/sections/*`
+   - Route imports: `src/routes/*`
+   - Utils imports: `src/utils/*`
+
+6. **Relative imports** (parent, sibling, index)
+   ```typescript
+   import { SomeComponent } from '../some-component';
+   import type { SomeType } from './types';
+   ```
+
+7. **Type imports from relative paths** (at the end)
+   ```typescript
+   import type { UserProps } from '../user-table-row';
+   ```
+
+### Import Spacing Rules
+- No extra blank lines between imports of the same group
+- Always have blank lines between different groups
+- Side-effect imports should be at the very top, before all other imports
+
+## Component Structure
+
+### File Naming
+- Components: `kebab-case.tsx` (e.g., `user-view.tsx`, `avatar-picker.tsx`)
+- Pages: `kebab-case.tsx` (e.g., `profile.tsx`, `sign-in.tsx`)
+- Types: `kebab-case.ts` (e.g., `types.ts`)
+
+### Component Exports
+- Use named exports for components
+- Export types separately with `export type`
+- Create `index.ts` files for re-exports when needed
+
+### Component Structure Template
+```typescript
+import type { ComponentProps } from 'somewhere';
+
+import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+
+import { someApi } from 'src/api/some';
+import { SomeComponent } from 'src/components/some';
+
+import type { LocalType } from './types';
+
+// ----------------------------------------------------------------------
+
+export function MyComponent() {
+  const { t } = useTranslation();
+  // component logic
+}
+```
+
+## React Best Practices
+
+### Hooks
+- Always use `useCallback` for event handlers passed as props
+- Use `useMemo` for expensive computations
+- Extract custom hooks to `src/hooks/` directory
+- Hook dependencies must be complete and correct
+
+### State Management
+- Use `useState` for local component state
+- Use Context API for global state (see `src/contexts/`)
+- Avoid prop drilling - use context when state needs to be shared
+
+### Component Patterns
+- Prefer function components over class components
+- Use TypeScript for all props: `type ComponentProps = { ... }`
+- Destructure props in function signature
+- Use early returns for loading/error states
+
+## Internationalization (i18n)
+
+### Translation Keys
+- Use nested keys: `t('section.key')` (e.g., `t('user.title')`, `t('common.save')`)
+- Translation files: `src/locales/en.json` and `src/locales/zh.json`
+- Always use `useTranslation` hook: `const { t } = useTranslation()`
+
+### Adding New Translations
+1. Add keys to both `en.json` and `zh.json`
+2. Use descriptive, hierarchical keys
+3. Group related translations under the same section
+
+## API Integration
+
+### API Structure
+- All API calls in `src/api/` directory
+- Use `api` client from `src/api/client.ts`
+- Define types for request/response payloads
+- Handle errors appropriately
+
+### API Pattern
+```typescript
+export type User = {
+  id: number;
+  username: string;
+  // ...
+};
+
+export const usersApi = {
+  getAll: () => api.get<User[]>('/users'),
+  create: (payload: CreatePayload) => api.post<{ id: number }>('/users', payload),
+  // ...
+};
+```
+
+## Material-UI Usage
+
+### Component Imports
+- Import components directly: `import Box from '@mui/material/Box'`
+- Use MUI components consistently
+- Follow MUI design patterns
+
+### Styling
+- Use `sx` prop for styling (preferred)
+- Use `styled` for reusable styled components
+- Theme customization in `src/theme/`
+
+## Icon Usage
+
+### Iconify Icons
+- Use `Iconify` component from `src/components/iconify`
+- Registered icons are in `src/components/iconify/icon-sets.ts`
+- For dynamic icon names from API/database, use `as any` type assertion:
+  ```typescript
+  <Iconify icon={iconName as any} width={24} />
+  ```
+
+## File Organization
+
+### Directory Structure
+```
+src/
+  api/          # API service layer
+  components/   # Reusable UI components
+  contexts/     # React contexts
+  hooks/        # Custom React hooks
+  layouts/      # Layout components
+  locales/      # i18n translation files
+  pages/        # Page components (route handlers)
+  routes/       # Route configuration
+  sections/     # Feature-specific view components
+  theme/        # MUI theme configuration
+  utils/        # Utility functions
+```
+
+### Section Components
+- Each feature has its own section in `src/sections/`
+- Structure: `sections/[feature]/view/[feature]-view.tsx`
+- Export via `index.ts` files
+
+## Error Handling
+
+### API Errors
+- Always use try-catch for async operations
+- Display user-friendly error messages
+- Use translation keys for error messages
+
+### TypeScript Errors
+- Fix type errors before committing
+- Use type assertions (`as any`) only when necessary (e.g., dynamic icon names)
+- Prefer proper typing over assertions
+
+## Code Quality
+
+### ESLint Rules
+- Follow all ESLint rules (configured in `eslint.config.mjs`)
+- Import order is strictly enforced
+- Unused imports are automatically removed
+- Run `npm run lint:fix` before committing
+
+### Prettier
+- Code is auto-formatted with Prettier
+- Run `npm run fm:fix` to format code
+- Run `npm run fix:all` to fix both linting and formatting
+
+## Common Patterns
+
+### Dialog/Modal Pattern
+```typescript
+const [open, setOpen] = useState(false);
+const handleOpen = useCallback(() => setOpen(true), []);
+const handleClose = useCallback(() => setOpen(false), []);
+```
+
+### Form Handling
+```typescript
+const [formData, setFormData] = useState({ field: '' });
+const handleChange = useCallback((field: string, value: string) => {
+  setFormData(prev => ({ ...prev, [field]: value }));
+}, []);
+```
+
+### API Data Fetching
+```typescript
+const [data, setData] = useState<DataType[]>([]);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const result = await api.getData();
+      setData(result);
+    } catch (error) {
+      console.error('Failed to fetch:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchData();
+}, []);
+```
+
+## Backend Integration
+
+### API Endpoints
+- Backend runs on Cloudflare Workers
+- API proxy configured in `vite.config.ts` (`/api` -> `http://localhost:8787`)
+- All API calls use `/api` prefix in frontend
+
+### Database
+- Uses Cloudflare D1 database
+- Migrations in `backend/migrations/`
+- Execute migrations: `npx wrangler d1 execute admin-db --local --file=migrations/xxx.sql`
+
+## Testing & Development
+
+### Development Server
+- Frontend: `npm run dev` (port 3039)
+- Backend: `cd backend && npm run dev` (port 8787)
+
+### Build
+- Production build: `npm run build`
+- Type checking: `npm run tsc:watch`
+
+## Important Notes
+
+1. **Import order is critical** - Always follow the import order rules above
+2. **Always use translations** - Never hardcode text, use `t('key')`
+3. **Type safety** - Use TypeScript types properly, avoid `any` when possible
+4. **Component organization** - Keep components modular and reusable
+5. **Error handling** - Always handle errors gracefully with user-friendly messages
+6. **Code consistency** - Follow existing patterns in the codebase
+
+## When Adding New Features
+
+1. Create types/interfaces first
+2. Create API service functions
+3. Create UI components
+4. Add translations (en + zh)
+5. Wire everything together
+6. Test and fix linting errors
+7. Ensure import order is correct
+
+---
+
+# Backend Development Rules
+
+## Backend Overview
+- **Framework**: Hono (lightweight web framework for Cloudflare Workers)
+- **Database**: Cloudflare D1 (SQLite-based)
+- **Runtime**: Cloudflare Workers
+- **Language**: TypeScript
+- **Authentication**: JWT (using jose library)
+- **Authorization**: RBAC (Role-Based Access Control)
+
+## Backend Structure
+
+```
+backend/
+  src/
+    index.ts           # Main entry point, route registration
+    types.ts           # TypeScript type definitions
+    routes/            # API route handlers
+      auth.ts          # Authentication routes
+      users.ts         # User management routes
+      roles.ts         # Role management routes
+      menus.ts         # Menu management routes
+    middlewares/       # Middleware functions
+      auth.ts          # JWT authentication middleware
+      rbac.ts          # Role-based access control
+      cors.ts          # CORS handling
+    utils/             # Utility functions
+      jwt.ts           # JWT signing and verification
+    db/                # Database related
+      migrations_0001_init.sql  # Initial schema
+  migrations/          # Database migration files
+    migrations_0001_init.sql
+    migrations_0002_*.sql
+  wrangler.toml        # Cloudflare Workers configuration
+```
+
+## Code Style
+
+### Import Order
+```typescript
+import { Hono } from 'hono'
+import type { Env } from '@/types'
+import { authMiddleware } from '@/middlewares/auth'
+import { permission } from '@/middlewares/rbac'
+```
+
+### Route Handler Pattern
+```typescript
+import { Hono } from 'hono'
+import type { Env } from '@/types'
+import { authMiddleware } from '@/middlewares/auth'
+import { permission } from '@/middlewares/rbac'
+
+const router = new Hono<Env>()
+
+// Apply middleware
+router.use('*', authMiddleware)
+
+// Routes
+router.get('/', permission('resource:view'), async (c) => {
+  const db = c.env.DB
+  // handler logic
+})
+
+export default router
+```
+
+### Error Handling
+- Return appropriate HTTP status codes
+- Use consistent error message format: `{ message: string }`
+- Common status codes:
+  - `200` - Success
+  - `400` - Bad Request (validation errors)
+  - `401` - Unauthorized (authentication failed)
+  - `403` - Forbidden (permission denied)
+  - `404` - Not Found
+  - `500` - Internal Server Error
+
+### Response Format
+```typescript
+// Success response
+return c.json({ id: 123 })
+return c.json({ message: 'updated' })
+return c.json(rows.results || [])
+
+// Error response
+return c.json({ message: 'Invalid credentials' }, 400)
+return c.json({ message: 'Forbidden' }, 403)
+```
+
+## Database Design Rules
+
+### Table Naming
+- Use **plural nouns** for table names: `users`, `roles`, `menus`
+- Use **snake_case** for column names: `user_id`, `created_at`, `role_id`
+- Use **TEXT** for string IDs (not INTEGER) for flexibility
+- Use **INTEGER** for numeric IDs and status flags
+
+### Common Column Patterns
+
+#### Primary Keys
+```sql
+-- Auto-increment integer ID
+id INTEGER PRIMARY KEY AUTOINCREMENT
+
+-- String ID (for menus, etc.)
+id TEXT PRIMARY KEY
+```
+
+#### Foreign Keys
+```sql
+-- Reference to another table
+role_id TEXT,  -- References roles.id
+parent_id TEXT DEFAULT '0',  -- Self-referencing (menus)
+```
+
+#### Timestamps
+```sql
+created_at TEXT DEFAULT CURRENT_TIMESTAMP
+-- Use TEXT with CURRENT_TIMESTAMP for D1 compatibility
+```
+
+#### Status Flags
+```sql
+status INTEGER DEFAULT 1,  -- 1 = active, 0 = inactive
+state INTEGER DEFAULT 1,   -- 1 = enabled, 0 = disabled
+is_hide INTEGER DEFAULT 0, -- 0 = visible, 1 = hidden
+```
+
+#### Text Fields
+```sql
+name TEXT,
+description TEXT,
+password TEXT,  -- Store plain text (in production, use hashing)
+```
+
+### Table Design Examples
+
+#### Users Table
+```sql
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE,
+  password TEXT,
+  nickname TEXT,
+  avatar TEXT DEFAULT '',
+  role_id TEXT,
+  status INTEGER DEFAULT 1,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Roles Table
+```sql
+CREATE TABLE IF NOT EXISTS roles (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT,
+  value TEXT UNIQUE,
+  description TEXT
+);
+```
+
+#### Menus Table
+```sql
+CREATE TABLE IF NOT EXISTS menus (
+  id TEXT PRIMARY KEY,
+  parent_id TEXT DEFAULT '0',
+  name TEXT,
+  path TEXT,
+  redirect TEXT,
+  state INTEGER DEFAULT 1,
+  menu_sort INTEGER DEFAULT 0,
+  icon TEXT,
+  title TEXT,
+  i18n TEXT,
+  is_hide INTEGER DEFAULT 0,
+  is_full INTEGER DEFAULT 0,
+  is_affix INTEGER DEFAULT 0,
+  is_keep_alive INTEGER DEFAULT 1,
+  permission TEXT
+);
+```
+
+#### Junction Tables (Many-to-Many)
+```sql
+CREATE TABLE IF NOT EXISTS role_menu (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  role_id TEXT,
+  menu_id TEXT
+);
+```
+
+### Database Migration Rules
+
+1. **Migration File Naming**
+   - Format: `migrations_XXXX_description.sql`
+   - Sequential numbering: `0001`, `0002`, `0003`, etc.
+   - Example: `migrations_0004_user_avatar.sql`
+
+2. **Migration Content**
+   ```sql
+   -- Always include comments explaining the change
+   -- Add new column
+   ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT '';
+   
+   -- Update existing data
+   UPDATE menus SET i18n = 'nav.dashboard' WHERE id = '1';
+   ```
+
+3. **Migration Execution**
+   ```bash
+   # Local development
+   npx wrangler d1 execute admin-db --local --file=migrations/migrations_XXXX_*.sql
+   
+   # Production (when ready)
+   npx wrangler d1 execute admin-db --remote --file=migrations/migrations_XXXX_*.sql
+   ```
+
+## Authentication & Authorization
+
+### JWT Token Structure
+```typescript
+{
+  id: string,           // User ID
+  username: string,     // Username
+  permissions: string[] // Array of permission strings
+}
+```
+
+### Permission Format
+- Format: `resource:action` (e.g., `user:view`, `user:add`, `user:edit`, `user:delete`)
+- Special permission: `*` (all permissions, for super admin)
+- Multiple permissions in menu: comma-separated string (e.g., `"user:view,user:add,user:edit"`)
+
+### Middleware Usage
+```typescript
+// Require authentication
+router.use('*', authMiddleware)
+
+// Require specific permission
+router.get('/', permission('user:view'), async (c) => {
+  // handler
+})
+
+// Access user from context
+const user = c.get('user') as JwtUser
+```
+
+### Super Admin Logic
+- Role with `value = 'super_admin'` gets all permissions
+- Automatically granted `['*', 'user:view', 'user:add', 'user:edit', 'user:delete']` in login handler
+
+## Database Query Patterns
+
+### SELECT Pattern
+```typescript
+const rows = await db
+  .prepare('SELECT id, username, nickname FROM users WHERE id = ?')
+  .bind(userId)
+  .all()
+
+return c.json(rows.results || [])
+```
+
+### INSERT Pattern
+```typescript
+const res = await db
+  .prepare('INSERT INTO users (username, password, nickname) VALUES (?, ?, ?)')
+  .bind(username, password, nickname)
+  .run()
+
+return c.json({ id: res.meta.last_row_id })
+```
+
+### UPDATE Pattern
+```typescript
+// Simple update
+await db
+  .prepare('UPDATE users SET nickname = ? WHERE id = ?')
+  .bind(nickname, id)
+  .run()
+
+// Conditional update (only update provided fields)
+const updates: string[] = []
+const values: any[] = []
+
+if (body.nickname !== undefined) {
+  updates.push('nickname = ?')
+  values.push(body.nickname)
+}
+
+if (updates.length > 0) {
+  values.push(id)
+  await db
+    .prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`)
+    .bind(...values)
+    .run()
+}
+```
+
+### DELETE Pattern
+```typescript
+await db
+  .prepare('DELETE FROM users WHERE id = ?')
+  .bind(id)
+  .run()
+
+// Also delete related records in junction tables
+await db
+  .prepare('DELETE FROM role_menu WHERE role_id = ?')
+  .bind(roleId)
+  .run()
+```
+
+### JOIN Queries
+```typescript
+const roleMenus = await db
+  .prepare(`
+    SELECT m.permission 
+    FROM role_menu rm 
+    JOIN menus m ON rm.menu_id = m.id 
+    WHERE rm.role_id = ?
+  `)
+  .bind(roleId)
+  .all()
+```
+
+## Type Safety
+
+### Type Definitions
+- Define types in `src/types.ts`
+- Use `Env` type for Hono context: `Hono<Env>`
+- Use `JwtUser` type for authenticated user
+- Export types for reuse across routes
+
+### Type Assertions
+```typescript
+// Database results
+const row = await db
+  .prepare('SELECT * FROM users WHERE id = ?')
+  .bind(id)
+  .first() as { id: number; username: string } | null
+
+// Request body
+const body = await c.req.json() as { username: string; password: string }
+
+// Context variables
+const user = c.get('user') as JwtUser
+```
+
+## Environment Variables
+
+### Configuration (wrangler.toml)
+```toml
+[vars]
+JWT_SECRET = "your-super-secret-jwt-key-change-in-production"
+JWT_EXPIRES = "7d"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "admin-db"
+database_id = "1149d787-937d-4df6-9dd2-17cd6cb89cfb"
+migrations_dir = "migrations"
+```
+
+### Accessing Environment
+```typescript
+const db = c.env.DB
+const secret = c.env.JWT_SECRET
+```
+
+## CORS Configuration
+
+- CORS middleware is applied globally in `src/index.ts`
+- Allows all origins (`*`) in development
+- Handles OPTIONS preflight requests
+- Sets appropriate headers for all requests
+
+## Best Practices
+
+1. **Always use prepared statements** - Prevents SQL injection
+2. **Handle null/undefined** - Use `??` operator for defaults
+3. **Return consistent response format** - Use `c.json()` for JSON responses
+4. **Use appropriate HTTP methods** - GET, POST, PUT, DELETE
+5. **Validate input** - Check required fields before processing
+6. **Use transactions** when needed - For multiple related operations
+7. **Handle errors gracefully** - Return user-friendly error messages
+8. **Use middleware for common logic** - Auth, RBAC, CORS
+9. **Keep routes focused** - One resource per route file
+10. **Document complex queries** - Add comments for JOIN queries
+
+## Adding New Backend Features
+
+1. **Create database migration** if needed
+   - Add new table or modify existing table
+   - Update seed data if necessary
+
+2. **Define types** in `src/types.ts`
+   - Add interfaces for new entities
+   - Update `Env` if needed
+
+3. **Create route file** in `src/routes/`
+   - Follow existing route patterns
+   - Apply appropriate middleware (auth, permissions)
+
+4. **Register route** in `src/index.ts`
+   ```typescript
+   import newRoutes from './routes/new-resource'
+   app.route('/new-resource', newRoutes)
+   ```
+
+5. **Test locally**
+   ```bash
+   cd backend
+   npm run dev
+   ```
+
+6. **Update frontend API** in `src/api/`
+   - Add types and API methods
+   - Update frontend components to use new API
+
+## Deployment
+
+### Cloudflare Workers Deployment
+
+#### Quick Deploy
+```bash
+cd backend
+npm run deploy
+```
+
+#### Deploy with Database Migrations
+```bash
+# Local database migrations
+npm run deploy:with-migrate
+
+# Remote (production) database migrations
+npm run deploy:full
+```
+
+#### Deployment Script
+The `deploy.sh` script automates the deployment process:
+1. Type checking (TypeScript)
+2. Optional database migrations
+3. Deployment to Cloudflare Workers
+
+**Script Options:**
+- `--migrate` - Run migrations on local database before deploy
+- `--remote` - Run migrations on remote (production) database before deploy
+
+**Example:**
+```bash
+./deploy.sh --migrate --remote  # Deploy with production migrations
+```
+
+#### Pre-Deployment Checklist
+1. ✅ Run type check: `npm run type-check`
+2. ✅ Update `wrangler.toml` with production JWT_SECRET
+3. ✅ Test locally: `npm run dev`
+4. ✅ Review database migrations
+5. ✅ Update environment variables if needed
+
+#### Production Environment Variables
+- Set sensitive variables using `wrangler secret put JWT_SECRET`
+- Update `wrangler.toml` for non-sensitive variables
+- Never commit secrets to version control
+

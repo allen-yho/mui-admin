@@ -1,0 +1,13 @@
+name = "admin-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[vars]
+JWT_SECRET = "your-super-secret-jwt-key-change-in-production"
+JWT_EXPIRES = "7d"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "admin-db"
+database_id = "1149d787-937d-4df6-9dd2-17cd6cb89cfb"
+migrations_dir = "migrations"
