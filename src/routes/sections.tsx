@@ -18,6 +18,7 @@ export const DashboardPage = lazy(() => import('src/pages/dashboard'));
 export const UserPage = lazy(() => import('src/pages/user'));
 export const RolePage = lazy(() => import('src/pages/role'));
 export const MenuPage = lazy(() => import('src/pages/menu'));
+export const R2Page = lazy(() => import('src/pages/r2'));
 export const ProfilePage = lazy(() => import('src/pages/profile'));
 export const SignInPage = lazy(() => import('src/pages/sign-in'));
 export const Page404 = lazy(() => import('src/pages/page-not-found'));
@@ -58,6 +59,7 @@ export const routesSection: RouteObject[] = [
       { path: 'user', element: <UserPage /> },
       { path: 'role', element: <RolePage /> },
       { path: 'menu', element: <MenuPage /> },
+      { path: 'r2', element: <R2Page /> },
       { path: 'profile', element: <ProfilePage /> },
     ],
   },

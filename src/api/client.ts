@@ -22,17 +22,19 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   const token = localStorage.getItem('token');
 
+  const isFormData = body instanceof FormData;
+
   const config: RequestInit = {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
   };
 
   if (body) {
-    config.body = JSON.stringify(body);
+    config.body = isFormData ? body : JSON.stringify(body);
   }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, config);

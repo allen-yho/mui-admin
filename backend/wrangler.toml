@@ -11,3 +11,8 @@ binding = "DB"
 database_name = "admin-db"
 database_id = "1149d787-937d-4df6-9dd2-17cd6cb89cfb"
 migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "R2_STORAGE"
+bucket_name = "admin-storage"
+preview_bucket_name = "admin-storage"

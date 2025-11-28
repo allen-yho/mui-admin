@@ -46,7 +46,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           isAuthenticated: true,
           isLoading: false,
         });
-      } catch (error) {
+      } catch {
         // token 无效，清除
         localStorage.removeItem('token');
         setState({

@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types'
+import type { D1Database, R2Bucket } from '@cloudflare/workers-types'
 import type { Context as HonoContext } from 'hono'
 
 
@@ -12,6 +12,7 @@ export interface JwtUser {
 export interface Env {
   Bindings: {
     DB: D1Database
+    R2_STORAGE: R2Bucket
     JWT_SECRET: string
     JWT_EXPIRES: string
   }
