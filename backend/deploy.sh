@@ -59,10 +59,18 @@ if [ "$MIGRATE" = true ]; then
     for migration in migrations/migrations_*.sql; do
       if [ -f "$migration" ]; then
         echo -e "${YELLOW}   Applying: $migration${NC}"
-        npx wrangler d1 execute admin-db --remote --file="$migration"
-        if [ $? -ne 0 ]; then
-          echo -e "${RED}❌ Migration failed: $migration${NC}"
-          exit 1
+        output=$(npx wrangler d1 execute admin-db --remote --file="$migration" 2>&1)
+        exit_code=$?
+        
+        # 检查是否是已知的可以忽略的错误（如 duplicate column）
+        if [ $exit_code -ne 0 ]; then
+          if echo "$output" | grep -q "duplicate column\|UNIQUE constraint failed"; then
+            echo -e "${YELLOW}   ⚠️  Migration already applied or column exists, skipping: $migration${NC}"
+          else
+            echo -e "${RED}❌ Migration failed: $migration${NC}"
+            echo "$output"
+            exit 1
+          fi
         fi
       fi
     done
@@ -71,10 +79,18 @@ if [ "$MIGRATE" = true ]; then
     for migration in migrations/migrations_*.sql; do
       if [ -f "$migration" ]; then
         echo -e "${YELLOW}   Applying: $migration${NC}"
-        npx wrangler d1 execute admin-db --local --file="$migration"
-        if [ $? -ne 0 ]; then
-          echo -e "${RED}❌ Migration failed: $migration${NC}"
-          exit 1
+        output=$(npx wrangler d1 execute admin-db --local --file="$migration" 2>&1)
+        exit_code=$?
+        
+        # 检查是否是已知的可以忽略的错误（如 duplicate column）
+        if [ $exit_code -ne 0 ]; then
+          if echo "$output" | grep -q "duplicate column\|UNIQUE constraint failed"; then
+            echo -e "${YELLOW}   ⚠️  Migration already applied or column exists, skipping: $migration${NC}"
+          else
+            echo -e "${RED}❌ Migration failed: $migration${NC}"
+            echo "$output"
+            exit 1
+          fi
         fi
       fi
     done

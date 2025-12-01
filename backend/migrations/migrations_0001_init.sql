@@ -44,5 +44,5 @@ CREATE TABLE IF NOT EXISTS role_menu (
 );
 
 -- seed role
-INSERT INTO roles (id, name, value, description) VALUES (1, '超级管理员', 'super_admin', 'has all privileges');
-INSERT INTO users (id, username, password, nickname, role_id) VALUES (1, 'admin', '123456', '超级管理员', '1');
+INSERT OR IGNORE INTO roles (id, name, value, description) VALUES (1, '超级管理员', 'super_admin', 'has all privileges');
+INSERT OR IGNORE INTO users (id, username, password, nickname, role_id) VALUES (1, 'admin', '123456', '超级管理员', '1');
