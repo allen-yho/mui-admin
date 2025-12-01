@@ -128,7 +128,13 @@ export default {
   'solar:folder-bold-duotone': {
     body: '<path fill="currentColor" d="M2 6c0-1.886 0-2.828.586-3.414C3.172 2 4.114 2 6 2h2.343c.818 0 1.226 0 1.594.152c.368.152.656.44 1.232 1.016l.656.656c.576.576.864.864 1.232 1.016C13.43 5 13.84 5 14.657 5H18c1.886 0 2.828 0 3.414.586C22 6.172 22 7.114 22 9v8c0 1.886 0 2.828-.586 3.414C20.828 21 19.886 21 18 21H6c-1.886 0-2.828 0-3.414-.586C2 19.828 2 18.886 2 17z" opacity="0.4"/><path fill="currentColor" d="M2 6h20M6 2h2.343c.818 0 1.226 0 1.594.152c.368.152.656.44 1.232 1.016l.656.656c.576.576.864.864 1.232 1.016C13.43 5 13.84 5 14.657 5H18"/>',
   },
+  'eva:folder-fill': {
+    body: '<g fill="currentColor"><path d="M20 6h-7.2l-2.4-3.2A2 2 0 0 0 8.8 2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Z"/></g>',
+  },
   'solar:arrow-left-bold': {
     body: '<path fill="currentColor" d="M15 4l-7 7l7 7M8 11h12"/>',
+  },
+  'solar:alt-arrow-right-linear': {
+    body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5l6 7l-6 7"/>',
   },
 };

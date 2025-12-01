@@ -141,7 +141,8 @@
     "folderName": "Folder Name",
     "root": "Root",
     "confirmDelete": "Are you sure you want to delete this file?",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "items": "items"
   },
   "common": {
     "save": "Save",

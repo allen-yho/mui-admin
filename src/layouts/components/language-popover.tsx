@@ -10,6 +10,8 @@ import MenuList from '@mui/material/MenuList';
 import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 
+import { Iconify } from 'src/components/iconify';
+
 // ----------------------------------------------------------------------
 
 export type LanguagePopoverProps = IconButtonProps & {
@@ -34,14 +36,26 @@ export function LanguagePopover({ data = [], sx, ...other }: LanguagePopoverProp
 
   const currentLang = data.find((lang) => lang.value === i18n.language) || data[0];
 
-  const renderFlag = (label?: string, icon?: string) => (
-    <Box
-      component="img"
-      alt={label}
-      src={icon}
-      sx={{ width: 26, height: 20, borderRadius: 0.5, objectFit: 'cover' }}
-    />
-  );
+  const renderFlag = (label?: string, icon?: string) => {
+    if (!icon) return null;
+    
+    if (icon.startsWith('/') || icon.startsWith('http')) {
+      return (
+        <Box
+          component="img"
+          alt={label}
+          src={icon}
+          sx={{ width: 26, height: 20, borderRadius: 0.5, objectFit: 'cover' }}
+        />
+      );
+    }
+
+    return (
+      <Box component="span" sx={{ '& > span': { width: 26, height: 20, borderRadius: 0.5, display: 'block' } }}>
+        <Iconify icon={icon as any} width={26} />
+      </Box>
+    );
+  };
 
   const renderMenuList = () => (
     <Popover

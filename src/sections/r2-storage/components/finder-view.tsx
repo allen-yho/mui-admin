@@ -1,27 +1,30 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import type { R2File } from 'src/api/r2';
+
 import { useTranslation } from 'react-i18next';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
-import LinearProgress from '@mui/material/LinearProgress';
-import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import LinearProgress from '@mui/material/LinearProgress';
+
+import { getFileIcon, getMimeTypeFromExtension } from 'src/utils/file-type';
+
+import { r2Api } from 'src/api/r2';
 
 import { Iconify } from 'src/components/iconify';
-
-import { r2Api, type R2File } from 'src/api/r2';
-import { getFileIcon, getMimeTypeFromExtension } from 'src/utils/file-type';
 
 // ----------------------------------------------------------------------
 
@@ -61,6 +64,7 @@ export function FinderView({
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
   const [isDraggingExternal, setIsDraggingExternal] = useState(false);
   const [renameDialog, setRenameDialog] = useState<{ key: string; name: string } | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<R2File | null>(null);
   const [newFolderDialog, setNewFolderDialog] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -144,23 +148,24 @@ export function FinderView({
             onDownload(item);
           }
           break;
-        case 'rename':
+        case 'rename': {
           const name = item.key.split('/').filter(Boolean).pop() || '';
           setRenameDialog({ key: item.key, name: name.replace(/\/$/, '') });
           break;
+        }
         case 'delete':
-          if (window.confirm(t('r2Storage.confirmDelete'))) {
-            onDelete(item.key);
-          }
+          setDeleteDialog(item);
           break;
         case 'open':
           if (item.isFolder) {
             onNavigate(item.key);
           }
           break;
+        default:
+          break;
       }
     },
-    [handleCloseContextMenu, onPreview, onDownload, onDelete, onNavigate, t]
+    [handleCloseContextMenu, onPreview, onDownload, onNavigate]
   );
 
   // 双击打开
@@ -231,13 +236,17 @@ export function FinderView({
 
   // 点击外部关闭右键菜单
   useEffect(() => {
+    if (!contextMenu) {
+      return undefined;
+    }
+
     const handleClickOutside = () => {
       setContextMenu(null);
     };
-    if (contextMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
   }, [contextMenu]);
 
   return (
@@ -258,12 +267,13 @@ export function FinderView({
       <Paper
         elevation={0}
         sx={{
-          p: 1.5,
-          borderBottom: 1,
+          p: 2,
+          borderBottom: '1px solid',
           borderColor: 'divider',
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
+          gap: 2,
+          bgcolor: 'background.paper',
         }}
       >
         <Stack direction="row" spacing={1}>
@@ -271,42 +281,101 @@ export function FinderView({
             size="small"
             onClick={() => onNavigate('')}
             disabled={!currentPath}
+            sx={{ 
+              bgcolor: 'action.hover', 
+              '&:hover': { bgcolor: 'action.selected' },
+              borderRadius: 1 
+            }}
           >
             <Iconify icon="solar:arrow-left-bold" width={20} />
           </IconButton>
-          <IconButton size="small" onClick={() => onNavigate('')}>
+          <IconButton 
+            size="small" 
+            onClick={() => onNavigate('')}
+            sx={{ 
+              bgcolor: 'action.hover', 
+              '&:hover': { bgcolor: 'action.selected' },
+              borderRadius: 1 
+            }}
+          >
             <Iconify icon="solar:home-angle-bold-duotone" width={20} />
           </IconButton>
         </Stack>
 
-        <Breadcrumbs separator="/" sx={{ flex: 1, mx: 2 }}>
-          <Button
-            variant="text"
-            size="small"
-            onClick={() => handleBreadcrumbClick(-1)}
-            sx={{ minWidth: 'auto', px: 1 }}
+        <Box 
+          sx={{ 
+            flex: 1, 
+            mx: 2, 
+            px: 2, 
+            py: 0.75, 
+            bgcolor: 'background.neutral', 
+            borderRadius: 1,
+            display: 'flex',
+            alignItems: 'center',
+            overflow: 'hidden'
+          }}
+        >
+          <Breadcrumbs 
+            separator={<Iconify icon="solar:alt-arrow-right-linear" width={16} sx={{ color: 'text.disabled' }} />}
+            sx={{ 
+              '& .MuiBreadcrumbs-ol': { 
+                flexWrap: 'nowrap',
+                overflow: 'hidden',
+              },
+              '& .MuiBreadcrumbs-li': {
+                whiteSpace: 'nowrap',
+              }
+            }}
           >
-            {t('r2Storage.root')}
-          </Button>
-          {pathParts.map((part, index) => (
             <Button
-              key={index}
               variant="text"
               size="small"
-              onClick={() => handleBreadcrumbClick(index)}
-              sx={{ minWidth: 'auto', px: 1 }}
+              onClick={() => handleBreadcrumbClick(-1)}
+              sx={{ 
+                minWidth: 'auto', 
+                px: 1,
+                color: !currentPath ? 'text.primary' : 'text.secondary',
+                fontWeight: !currentPath ? 'bold' : 'normal',
+                '&:hover': { color: 'primary.main', bgcolor: 'transparent' }
+              }}
             >
-              {part}
+              {t('r2Storage.root')}
             </Button>
-          ))}
-        </Breadcrumbs>
+            {pathParts.map((part, index) => {
+              const isLast = index === pathParts.length - 1;
+              return (
+                <Button
+                  key={index}
+                  variant="text"
+                  size="small"
+                  onClick={() => handleBreadcrumbClick(index)}
+                  sx={{ 
+                    minWidth: 'auto', 
+                    px: 1,
+                    color: isLast ? 'text.primary' : 'text.secondary',
+                    fontWeight: isLast ? 'bold' : 'normal',
+                    '&:hover': { color: 'primary.main', bgcolor: 'transparent' }
+                  }}
+                >
+                  {part}
+                </Button>
+              );
+            })}
+          </Breadcrumbs>
+        </Box>
 
         <Stack direction="row" spacing={1}>
           <Button
-            variant="outlined"
+            variant="contained"
+            color="inherit"
             size="small"
             startIcon={<Iconify icon="mingcute:add-line" width={18} />}
             onClick={() => setNewFolderDialog(true)}
+            sx={{ 
+              bgcolor: 'text.primary', 
+              color: 'background.paper',
+              '&:hover': { bgcolor: 'text.secondary' }
+            }}
           >
             {t('r2Storage.newFolder')}
           </Button>
@@ -318,9 +387,9 @@ export function FinderView({
         sx={{
           flex: 1,
           overflow: 'auto',
-          p: 2,
+          p: 3,
           position: 'relative',
-          bgcolor: isDraggingExternal ? 'action.hover' : 'transparent',
+          bgcolor: isDraggingExternal ? 'action.hover' : 'background.default',
           transition: 'background-color 0.2s',
         }}
       >
@@ -337,20 +406,25 @@ export function FinderView({
               color: 'text.secondary',
             }}
           >
-            <Iconify icon="solar:cloud-storage-bold-duotone" width={64} sx={{ mb: 2, opacity: 0.5 }} />
-            <Typography variant="body1">{t('r2Storage.noFiles')}</Typography>
-            {isDraggingExternal && (
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                {t('r2Storage.dropFilesHere')}
-              </Typography>
-            )}
+            <Box 
+              sx={{ 
+                p: 3, 
+                borderRadius: '50%', 
+                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)',
+                mb: 2 
+              }}
+            >
+              <Iconify icon="solar:cloud-storage-bold-duotone" width={64} sx={{ opacity: 0.5, color: 'text.disabled' }} />
+            </Box>
+            <Typography variant="subtitle1" sx={{ color: 'text.primary', mb: 1 }}>{t('r2Storage.noFiles')}</Typography>
+            <Typography variant="body2">{t('r2Storage.dropFilesHere')}</Typography>
           </Box>
         ) : (
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-              gap: 2,
+              gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+              gap: 2.5,
             }}
           >
             {files.map((item) => {
@@ -359,7 +433,7 @@ export function FinderView({
               const isSelected = selectedItems.has(item.key);
               const isDraggedOver = dragOverFolder === item.key && item.isFolder;
               const icon = item.isFolder
-                ? 'solar:folder-bold-duotone'
+                ? 'eva:folder-fill'
                 : (getFileIcon(item.httpMetadata?.contentType || getMimeTypeFromExtension(name), name) as any);
 
               return (
@@ -412,57 +486,83 @@ export function FinderView({
                     cursor: 'pointer',
                     userSelect: 'none',
                     position: 'relative',
-                    border: 2,
-                    borderColor: isSelected ? 'primary.main' : 'transparent',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: isSelected ? 'primary.main' : 'divider',
                     bgcolor: isDraggedOver ? 'action.hover' : isSelected ? 'action.selected' : 'background.paper',
+                    boxShadow: isSelected ? 'none' : 'none',
                     '&:hover': {
                       bgcolor: 'action.hover',
+                      boxShadow: (theme) => theme.customShadows?.z4 || '0 8px 16px 0 rgba(145, 158, 171, 0.16)',
+                      borderColor: 'transparent',
                     },
                     transition: 'all 0.2s',
                   }}
                 >
-                  <Stack spacing={1} alignItems="center">
+                  {isSelected && (
                     <Box
                       sx={{
-                        width: 64,
-                        height: 64,
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        zIndex: 9,
+                        color: 'primary.main',
+                      }}
+                    >
+                      <Iconify icon="solar:check-circle-bold" width={20} />
+                    </Box>
+                  )}
+                  <Stack spacing={2} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 72,
+                        height: 72,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         position: 'relative',
+                        borderRadius: 1.5,
+                        bgcolor: (theme) => item.isFolder ? 'rgba(255, 171, 0, 0.08)' : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)',
                       }}
                     >
                       <Iconify
                         icon={icon}
-                        width={item.isFolder ? 56 : 48}
+                        width={item.isFolder ? 48 : 40}
                         sx={{
                           color: item.isFolder ? 'warning.main' : 'text.secondary',
                         }}
                       />
                     </Box>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        textAlign: 'center',
-                        wordBreak: 'break-word',
-                        maxWidth: '100%',
-                        lineHeight: 1.2,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        minHeight: '2.4em', // 2 lines * 1.2 line-height
-                      }}
-                      title={fullName}
-                    >
-                      {name}
-                    </Typography>
-                    {!item.isFolder && (
-                      <Typography variant="caption" color="text.secondary">
-                        {formatFileSize(item.size)}
+                    <Box sx={{ width: '100%', textAlign: 'center' }}>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          textAlign: 'center',
+                          wordBreak: 'break-word',
+                          maxWidth: '100%',
+                          lineHeight: 1.25,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          minHeight: '2.5em',
+                          mb: 0.5,
+                        }}
+                        title={fullName}
+                      >
+                        {name}
                       </Typography>
-                    )}
+                      {!item.isFolder ? (
+                        <Typography variant="caption" color="text.secondary">
+                          {formatFileSize(item.size)}
+                        </Typography>
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">
+                          {item.itemCount || 0} {t('r2Storage.items', 'items')}
+                        </Typography>
+                      )}
+                    </Box>
                   </Stack>
                 </Card>
               );
@@ -479,12 +579,16 @@ export function FinderView({
             top: contextMenu.y,
             left: contextMenu.x,
             zIndex: 1300,
-            minWidth: 160,
-            boxShadow: 3,
+            minWidth: 180,
+            boxShadow: (theme) => theme.customShadows?.dropdown || '0 0 2px 0 rgba(145, 158, 171, 0.24), 0 20px 40px -4px rgba(145, 158, 171, 0.24)',
+            borderRadius: 1.5,
+            p: 1,
+            border: '1px solid',
+            borderColor: 'divider',
           }}
           onClick={handleCloseContextMenu}
         >
-          <MenuList>
+          <MenuList sx={{ p: 0 }}>
             {contextMenu.item?.isFolder ? (
               <MenuItem onClick={() => handleContextMenuAction('open', contextMenu.item!)}>
                 <Iconify icon="solar:eye-bold" width={20} sx={{ mr: 1 }} />
@@ -516,6 +620,31 @@ export function FinderView({
           </MenuList>
         </Paper>
       )}
+
+      {/* 删除确认对话框 */}
+      <Dialog open={!!deleteDialog} onClose={() => setDeleteDialog(null)}>
+        <DialogTitle>{t('common.confirm')}</DialogTitle>
+        <DialogContent>
+          <Typography>
+            {t('r2Storage.confirmDelete')} &quot;{deleteDialog ? getItemName(deleteDialog) : ''}&quot;?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog(null)}>{t('common.cancel')}</Button>
+          <Button 
+            onClick={() => {
+              if (deleteDialog) {
+                onDelete(deleteDialog.key);
+                setDeleteDialog(null);
+              }
+            }} 
+            color="error" 
+            variant="contained"
+          >
+            {t('common.delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* 重命名对话框 */}
       <Dialog open={!!renameDialog} onClose={() => setRenameDialog(null)}>

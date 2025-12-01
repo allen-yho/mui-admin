@@ -1,19 +1,18 @@
+import type { R2File } from 'src/api/r2';
+
 import { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 
-import Container from '@mui/material/Container';
 import Card from '@mui/material/Card';
+import Container from '@mui/material/Container';
 
-import { r2Api, type R2File } from 'src/api/r2';
+import { r2Api } from 'src/api/r2';
 
 import { FinderView } from '../components/finder-view';
 import { FilePreview } from '../components/file-preview';
-import { FileUploader } from '../components/file-uploader';
 
 // ----------------------------------------------------------------------
 
 export function R2StorageView() {
-  const { t } = useTranslation();
   const [files, setFiles] = useState<R2File[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewFile, setPreviewFile] = useState<R2File | null>(null);
@@ -146,8 +145,18 @@ export function R2StorageView() {
   );
 
   return (
-    <Container maxWidth={false} sx={{ height: 'calc(100vh - 100px)', p: 0 }}>
-      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Container maxWidth={false} sx={{ height: 'calc(100vh - 100px)', p: 0, pt: 1 }}>
+      <Card 
+        sx={{ 
+          height: '100%', 
+          display: 'flex', 
+          flexDirection: 'column',
+          borderRadius: 2,
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: (theme) => theme.customShadows?.card || '0 0 2px 0 rgba(145, 158, 171, 0.2), 0 12px 24px -4px rgba(145, 158, 171, 0.12)', 
+        }}
+      >
         <FinderView
           files={files}
           loading={loading}

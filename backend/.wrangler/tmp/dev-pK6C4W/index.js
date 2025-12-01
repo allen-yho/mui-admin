@@ -6,7 +6,7 @@ var __publicField = (obj, key, value) => {
   return value;
 };
 
-// .wrangler/tmp/bundle-xFfbFe/strip-cf-connecting-ip-header.js
+// .wrangler/tmp/bundle-oxkxAD/strip-cf-connecting-ip-header.js
 function stripCfConnectingIPHeader(input, init) {
   const request = new Request(input, init);
   request.headers.delete("CF-Connecting-IP");
@@ -3332,36 +3332,44 @@ router5.get("/", permission("r2:view"), async (c) => {
     options.cursor = cursor;
   }
   const list = await r2.list(options);
-  const files = [];
-  const folders = /* @__PURE__ */ new Set();
+  const filesMap = /* @__PURE__ */ new Map();
   for (const obj of list.objects || []) {
     const key = obj.key;
     if (key === prefix)
       continue;
     if (key.endsWith("/")) {
-      folders.add(key);
-      files.push({
-        key,
-        size: 0,
-        uploaded: obj.uploaded?.toISOString(),
-        etag: obj.etag,
-        isFolder: true
-      });
+      if (!filesMap.has(key)) {
+        filesMap.set(key, {
+          key,
+          size: 0,
+          uploaded: obj.uploaded?.toISOString(),
+          etag: obj.etag,
+          isFolder: true,
+          itemCount: 0
+        });
+      } else {
+        const existing = filesMap.get(key);
+        existing.uploaded = obj.uploaded?.toISOString();
+        existing.etag = obj.etag;
+        existing.isFolder = true;
+      }
     } else {
       const relativePath = prefix ? key.replace(prefix, "") : key;
       const parts = relativePath.split("/").filter(Boolean);
       if (parts.length > 1) {
         const folderPath = prefix + parts[0] + "/";
-        if (!folders.has(folderPath)) {
-          folders.add(folderPath);
-          files.push({
+        if (!filesMap.has(folderPath)) {
+          filesMap.set(folderPath, {
             key: folderPath,
             size: 0,
-            isFolder: true
+            isFolder: true,
+            itemCount: 0
           });
         }
+        const folder = filesMap.get(folderPath);
+        folder.itemCount = (folder.itemCount || 0) + 1;
       } else {
-        files.push({
+        filesMap.set(key, {
           key,
           size: obj.size,
           uploaded: obj.uploaded?.toISOString(),
@@ -3372,9 +3380,7 @@ router5.get("/", permission("r2:view"), async (c) => {
       }
     }
   }
-  const uniqueFiles = Array.from(
-    new Map(files.map((f) => [f.key, f])).values()
-  ).sort((a, b) => {
+  const uniqueFiles = Array.from(filesMap.values()).sort((a, b) => {
     if (a.isFolder && !b.isFolder)
       return -1;
     if (!a.isFolder && b.isFolder)
@@ -3598,11 +3604,24 @@ router5.put("/move", permission("r2:edit"), async (c) => {
 router5.delete("/:key(*)", permission("r2:delete"), async (c) => {
   const env = c.env;
   const r2 = env.R2_STORAGE;
-  const keyParam = c.req.param("key");
+  let keyParam = c.req.param("key");
+  if (!keyParam || keyParam.trim() === "") {
+    const url = new URL(c.req.url);
+    const pathParts = url.pathname.split("/");
+    const r2Index = pathParts.findIndex((p) => p === "r2");
+    if (r2Index >= 0 && r2Index < pathParts.length - 1) {
+      keyParam = pathParts.slice(r2Index + 1).join("/");
+    }
+  }
   if (!keyParam) {
     return c.json({ message: "Key is required" }, 400);
   }
-  const key = decodeURIComponent(keyParam);
+  let key;
+  try {
+    key = decodeURIComponent(keyParam);
+  } catch (error) {
+    key = keyParam;
+  }
   if (key.endsWith("/")) {
     const list = await r2.list({ prefix: key });
     for (const obj of list.objects || []) {
@@ -3687,7 +3706,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-xFfbFe/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-oxkxAD/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -3719,7 +3738,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-xFfbFe/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-oxkxAD/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

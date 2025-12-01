@@ -102,12 +102,12 @@ export const _langs = [
   {
     value: 'en',
     label: 'English',
-    icon: '/assets/icons/flags/ic-flag-en.svg',
+    icon: 'flagpack:gb',
   },
   {
     value: 'zh',
     label: '中文',
-    icon: '/assets/icons/flags/ic-flag-cn.svg',
+    icon: 'flagpack:cn',
   },
 ];
 

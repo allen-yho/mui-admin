@@ -1,3 +1,5 @@
+import type { R2File } from 'src/api/r2';
+
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -5,19 +7,17 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import Tooltip from '@mui/material/Tooltip';
+import TableRow from '@mui/material/TableRow';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 
-import { Iconify } from 'src/components/iconify';
-
 import { getFileIcon, getMimeTypeFromExtension } from 'src/utils/file-type';
 
-import type { R2File } from 'src/api/r2';
+import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 

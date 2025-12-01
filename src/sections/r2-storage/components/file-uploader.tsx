@@ -1,5 +1,7 @@
-import { useRef, useState, useCallback } from 'react';
+import type { UploadPart } from 'src/api/r2';
+
 import { useTranslation } from 'react-i18next';
+import { useRef, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -7,10 +9,9 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 
-import { Iconify } from 'src/components/iconify';
-
-import type { UploadPart } from 'src/api/r2';
 import { r2Api } from 'src/api/r2';
+
+import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 

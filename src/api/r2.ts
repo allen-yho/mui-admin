@@ -8,6 +8,7 @@ export type R2File = {
   uploaded?: string;
   etag?: string;
   isFolder?: boolean;
+  itemCount?: number; // 文件夹下的项目数量
   httpMetadata?: {
     contentType?: string;
     contentDisposition?: string;
@@ -63,7 +64,7 @@ export const r2Api = {
     }),
 
   // 上传分片
-  uploadPart: (file: File, key: string, uploadId: string, partNumber: number) => {
+  uploadPart: (file: Blob, key: string, uploadId: string, partNumber: number) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('key', key);

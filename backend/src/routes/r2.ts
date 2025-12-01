@@ -30,16 +30,16 @@ router.get('/', permission('r2:view'), async (c) => {
   const list = await r2.list(options)
   
   // 分离文件和文件夹
-  const files: Array<{
+  const filesMap = new Map<string, {
     key: string
     size: number
     uploaded?: string
     etag?: string
     httpMetadata?: any
     isFolder?: boolean
-  }> = []
-  const folders = new Set<string>()
-
+    itemCount?: number
+  }>()
+  
   // 处理 R2 返回的对象
   for (const obj of list.objects || []) {
     const key = obj.key
@@ -50,33 +50,47 @@ router.get('/', permission('r2:view'), async (c) => {
     // 检查是否是文件夹标记（以 / 结尾）
     if (key.endsWith('/')) {
       // 这是一个文件夹标记对象
-      folders.add(key)
-      files.push({
-        key,
-        size: 0,
-        uploaded: obj.uploaded?.toISOString(),
-        etag: obj.etag,
-        isFolder: true,
-      })
+      if (!filesMap.has(key)) {
+        filesMap.set(key, {
+          key,
+          size: 0,
+          uploaded: obj.uploaded?.toISOString(),
+          etag: obj.etag,
+          isFolder: true,
+          itemCount: 0
+        })
+      } else {
+        // 更新已存在的文件夹对象（可能是之前通过子文件推断出的）
+        const existing = filesMap.get(key)!
+        existing.uploaded = obj.uploaded?.toISOString()
+        existing.etag = obj.etag
+        existing.isFolder = true
+      }
     } else {
       // 检查是否有子文件夹（在当前前缀下的直接子项）
       const relativePath = prefix ? key.replace(prefix, '') : key
       const parts = relativePath.split('/').filter(Boolean)
       
       if (parts.length > 1) {
-        // 有子文件夹，添加文件夹到列表
+        // 有子文件夹
         const folderPath = prefix + parts[0] + '/'
-        if (!folders.has(folderPath)) {
-          folders.add(folderPath)
-          files.push({
+        
+        // 获取或创建文件夹条目
+        if (!filesMap.has(folderPath)) {
+          filesMap.set(folderPath, {
             key: folderPath,
             size: 0,
             isFolder: true,
+            itemCount: 0
           })
         }
+        
+        // 增加项目计数
+        const folder = filesMap.get(folderPath)!
+        folder.itemCount = (folder.itemCount || 0) + 1
       } else {
         // 直接在当前目录下的文件
-        files.push({
+        filesMap.set(key, {
           key,
           size: obj.size,
           uploaded: obj.uploaded?.toISOString(),
@@ -88,10 +102,8 @@ router.get('/', permission('r2:view'), async (c) => {
     }
   }
 
-  // 去重并排序（文件夹在前）
-  const uniqueFiles = Array.from(
-    new Map(files.map((f) => [f.key, f])).values()
-  ).sort((a, b) => {
+  // 转换为数组并排序（文件夹在前）
+  const uniqueFiles = Array.from(filesMap.values()).sort((a, b) => {
     if (a.isFolder && !b.isFolder) return -1
     if (!a.isFolder && b.isFolder) return 1
     return a.key.localeCompare(b.key)
@@ -387,11 +399,33 @@ router.put('/move', permission('r2:edit'), async (c) => {
 router.delete('/:key(*)', permission('r2:delete'), async (c) => {
   const env = c.env as EnvBindings
   const r2 = env.R2_STORAGE
-  const keyParam = c.req.param('key')
+  
+  // 尝试从路由参数获取 key
+  let keyParam = c.req.param('key')
+  
+  // 如果路由参数为空，尝试从 URL 路径中提取
+  if (!keyParam || keyParam.trim() === '') {
+    const url = new URL(c.req.url)
+    // 假设路径是 /r2/key...
+    const pathParts = url.pathname.split('/')
+    // 找到 r2 的位置，取其后的部分
+    // 注意：这里的 r2 取决于挂载路径，假设是挂载在 /r2
+    const r2Index = pathParts.findIndex(p => p === 'r2')
+    if (r2Index >= 0 && r2Index < pathParts.length - 1) {
+      keyParam = pathParts.slice(r2Index + 1).join('/')
+    }
+  }
+
   if (!keyParam) {
     return c.json({ message: 'Key is required' }, 400)
   }
-  const key = decodeURIComponent(keyParam)
+  
+  let key: string
+  try {
+    key = decodeURIComponent(keyParam)
+  } catch (error) {
+    key = keyParam
+  }
 
   // 如果是文件夹，删除所有子项
   if (key.endsWith('/')) {

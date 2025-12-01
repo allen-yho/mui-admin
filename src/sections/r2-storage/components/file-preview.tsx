@@ -1,20 +1,23 @@
+import type { R2File } from 'src/api/r2';
+
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import Dialog from '@mui/material/Dialog';
 import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 
-import { Iconify } from 'src/components/iconify';
-
-import { getMimeTypeFromExtension } from 'src/utils/file-type';
+import { getFileIcon, getMimeTypeFromExtension } from 'src/utils/file-type';
 
 import { r2Api } from 'src/api/r2';
-import type { R2File } from 'src/api/r2';
+
+import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
@@ -24,6 +27,7 @@ type FilePreviewProps = {
 };
 
 export function FilePreview({ file, onClose }: FilePreviewProps) {
+  const { t } = useTranslation();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -129,19 +133,41 @@ export function FilePreview({ file, onClose }: FilePreviewProps) {
   };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box component="span" sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+    <Dialog 
+      open 
+      onClose={onClose} 
+      maxWidth="lg" 
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          bgcolor: 'background.paper',
+          backgroundImage: 'none',
+        }
+      }}
+    >
+      <DialogTitle 
+        sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          py: 2
+        }}
+      >
+        <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Iconify icon={getFileIcon(contentType, fileName) as any} width={24} sx={{ color: 'text.secondary' }} />
+          <Box component="span" sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', typography: 'subtitle1' }}>
             {fileName}
           </Box>
         </Box>
-        <IconButton onClick={onClose} size="small">
-          <Iconify icon="mingcute:close-line" width={20} />
+        <IconButton onClick={onClose} size="small" sx={{ ml: 2 }}>
+          <Iconify icon="mingcute:close-line" width={24} />
         </IconButton>
       </DialogTitle>
 
-      <DialogContent>
+      <DialogContent sx={{ p: 0, bgcolor: 'background.neutral', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
             <Iconify icon="solar:restart-bold" width={48} sx={{ animation: 'spin 1s linear infinite' }} />
@@ -218,11 +244,26 @@ export function FilePreview({ file, onClose }: FilePreviewProps) {
         )}
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={handleDownload} startIcon={<Iconify icon="solar:share-bold" width={20} />}>
-          Download
+      <DialogActions sx={{ borderTop: '1px solid', borderColor: 'divider', p: 2, bgcolor: 'background.paper' }}>
+        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {contentType || 'Unknown type'}
+          </Typography>
+          <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: 'text.disabled' }} />
+          <Typography variant="body2" color="text.secondary">
+            {file.size ? (file.size / 1024 / 1024).toFixed(2) + ' MB' : '0 MB'}
+          </Typography>
+        </Box>
+        <Button 
+          variant="contained"
+          onClick={handleDownload} 
+          startIcon={<Iconify icon="solar:share-bold" width={20} />}
+        >
+          {t('r2Storage.download')}
         </Button>
-        <Button onClick={onClose}>Close</Button>
+        <Button variant="outlined" onClick={onClose}>
+          {t('common.close')}
+        </Button>
       </DialogActions>
     </Dialog>
   );

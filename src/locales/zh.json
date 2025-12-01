@@ -141,7 +141,8 @@
     "folderName": "文件夹名称",
     "root": "根目录",
     "confirmDelete": "确定要删除此文件吗？",
-    "unknown": "未知"
+    "unknown": "未知",
+    "items": "项"
   },
   "common": {
     "save": "保存",
